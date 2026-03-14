@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>QuadCalc</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --pane-bg: #1a1a1a;
+    --pane-active: #1e1e1e;
+    --display-bg: #111;
+    --btn: #2a2a2a;
+    --btn-hover: #353535;
+    --btn-op: #1a3a5c;
+    --btn-op-hover: #244a70;
+    --btn-eq: #0d6efd;
+    --btn-eq-hover: #2b80ff;
+    --btn-clear: #5c1a1a;
+    --btn-clear-hover: #7a2a2a;
+    --btn-tax: #1a4a2a;
+    --btn-tax-hover: #2a6a3a;
+    --btn-biz: #4a3a1a;
+    --btn-biz-hover: #6a5a2a;
+    --text: #e0e0e0;
+    --text-dim: #666;
+    --text-mid: #999;
+    --accent: #0d6efd;
+    --accent-green: #2ecc71;
+    --accent-orange: #e67e22;
+    --accent-purple: #9b59b6;
+    --border: #2a2a2a;
+    --history-bg: #141414;
+    --drag-highlight: rgba(13,110,253,0.12);
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'Segoe UI', 'Meiryo', 'Yu Gothic', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  /* ========== HEADER ========== */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 12px;
+    border-bottom: 1px solid var(--border);
+    height: 36px;
+    gap: 8px;
+  }
+  .header h1 {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .header h1 em { color: var(--accent); font-style: normal; }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .header-btn {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--btn);
+    border: 1px solid var(--border);
+    color: var(--text-mid);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .header-btn:hover { background: var(--btn-hover); color: var(--text); }
+  .header-btn.lang-toggle { font-weight: 700; min-width: 32px; text-align: center; }
+  .header .hint {
+    font-size: 10px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ========== DESKTOP GRID ========== */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 3px;
+    padding: 3px;
+    height: calc(100vh - 36px);
+  }
+
+  /* ========== CALC PANE ========== */
+  .calc-pane {
+    background: var(--pane-bg);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 2px solid transparent;
+    transition: border-color 0.15s;
+    position: relative;
+  }
+  .calc-pane.active { border-color: var(--accent); background: var(--pane-active); }
+  .calc-pane.drag-over { border-color: var(--accent); background: var(--drag-highlight); }
+
+  .pane-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3px 8px;
+    min-height: 22px;
+    flex-shrink: 0;
+  }
+  .pane-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+  .pane-right { display: flex; align-items: center; gap: 3px; }
+  .pane-tabs { display: flex; gap: 2px; }
+  .pane-tab {
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .pane-tab:hover { background: var(--btn); color: var(--text); }
+  .pane-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .clear-hist-btn {
+    font-size: 8px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    background: var(--btn-clear);
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+  }
+  .clear-hist-btn:hover { background: var(--btn-clear-hover); color: var(--text); }
+
+  /* ========== DISPLAY ========== */
+  .display-area { padding: 2px 10px; flex-shrink: 0; }
+  .expression {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: right;
+    min-height: 14px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    direction: rtl;
+  }
+  .display {
+    font-size: 28px;
+    font-weight: 300;
+    text-align: right;
+    color: var(--text);
+    min-height: 34px;
+    line-height: 34px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: grab;
+    padding: 1px 4px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .display:hover { background: rgba(13,110,253,0.08); }
+  .sub-display {
+    font-size: 11px;
+    color: var(--accent-green);
+    text-align: right;
+    min-height: 14px;
+    line-height: 14px;
+    padding: 0 4px 1px;
+  }
+
+  /* ========== HISTORY ========== */
+  .history-area {
+    flex-shrink: 0;
+    max-height: 40px;
+    overflow-y: auto;
+    padding: 1px 10px;
+    background: var(--history-bg);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .history-area::-webkit-scrollbar { width: 3px; }
+  .history-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .history-item {
+    font-size: 10px;
+    color: var(--text-dim);
+    padding: 1px 0;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .history-item:hover { color: var(--accent); }
+  .history-item .hist-result { color: var(--text); font-weight: 600; }
+
+  /* ========== BUTTONS ========== */
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    padding: 3px;
+    flex: 1;
+    min-height: 0;
+  }
+  .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--btn);
+    border: none;
+    border-radius: 5px;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.1s, transform 0.05s;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .btn:hover { background: var(--btn-hover); }
+  .btn:active { transform: scale(0.96); }
+  .btn.op { background: var(--btn-op); }
+  .btn.op:hover { background: var(--btn-op-hover); }
+  .btn.eq { background: var(--btn-eq); font-weight: 700; }
+  .btn.eq:hover { background: var(--btn-eq-hover); }
+  .btn.clear { background: var(--btn-clear); }
+  .btn.clear:hover { background: var(--btn-clear-hover); }
+  .btn.tax { background: var(--btn-tax); font-size: 10px; }
+  .btn.tax:hover { background: var(--btn-tax-hover); }
+  .btn.biz { background: var(--btn-biz); font-size: 10px; }
+  .btn.biz:hover { background: var(--btn-biz-hover); }
+  .btn.wide { grid-column: span 2; }
+
+  /* ========== UNIT CONVERTER ========== */
+  .converter-panel {
+    display: none;
+    flex-direction: column;
+    padding: 6px;
+    gap: 3px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .converter-panel.visible { display: flex; }
+  .conv-row { display: flex; align-items: center; gap: 4px; padding: 2px 0; }
+  .conv-row label { font-size: 11px; color: var(--text-mid); min-width: 34px; text-align: right; }
+  .conv-input {
+    flex: 1;
+    background: var(--display-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 14px;
+    padding: 6px;
+    text-align: right;
+    outline: none;
+    font-family: inherit;
+    min-width: 0;
+  }
+  .conv-input:focus { border-color: var(--accent); }
+  .conv-arrow { color: var(--text-dim); font-size: 13px; }
+  .conv-category {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    padding: 3px 0 1px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ========== WARIKAN ========== */
+  .warikan-panel { display: none; flex-direction: column; padding: 8px; gap: 8px; flex: 1; }
+  .warikan-panel.visible { display: flex; }
+  .wari-field { display: flex; align-items: center; gap: 6px; }
+  .wari-field label { font-size: 13px; color: var(--text-mid); min-width: 70px; }
+  .wari-input {
+    flex: 1;
+    background: var(--display-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 18px;
+    padding: 8px;
+    text-align: right;
+    outline: none;
+    font-family: inherit;
+  }
+  .wari-input:focus { border-color: var(--accent); }
+  .wari-result { background: var(--history-bg); border-radius: 6px; padding: 12px; text-align: center; }
+  .wari-result .amount { font-size: 32px; font-weight: 300; color: var(--accent-green); }
+  .wari-result .wr-label { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .wari-result .remainder { font-size: 11px; color: var(--accent-orange); margin-top: 4px; }
+
+  /* ========== DATE CALC ========== */
+  .date-panel { display: none; flex-direction: column; padding: 8px; gap: 8px; flex: 1; }
+  .date-panel.visible { display: flex; }
+  .date-field { display: flex; align-items: center; gap: 6px; }
+  .date-field label { font-size: 13px; color: var(--text-mid); min-width: 50px; }
+  .date-input {
+    flex: 1;
+    background: var(--display-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 15px;
+    padding: 8px;
+    outline: none;
+    font-family: inherit;
+    color-scheme: dark;
+  }
+  .date-input:focus { border-color: var(--accent); }
+  .date-result { background: var(--history-bg); border-radius: 6px; padding: 12px; text-align: center; }
+  .date-result .days { font-size: 36px; font-weight: 300; color: var(--accent-purple); }
+  .date-result .dr-label { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .date-result .detail { font-size: 11px; color: var(--text-mid); margin-top: 6px; }
+
+  /* ========== HELP OVERLAY ========== */
+  .help-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    overflow-y: auto;
+    padding: 20px;
+  }
+  .help-overlay.visible { display: block; }
+  .help-box {
+    max-width: 640px;
+    margin: 0 auto;
+    background: var(--pane-bg);
+    border-radius: 10px;
+    padding: 24px;
+    border: 1px solid var(--border);
+  }
+  .help-box h2 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--accent);
+  }
+  .help-box h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent-green);
+    margin: 14px 0 6px;
+    padding-bottom: 3px;
+    border-bottom: 1px solid var(--border);
+  }
+  .help-box p, .help-box li {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-mid);
+  }
+  .help-box ul { padding-left: 18px; }
+  .help-box li { margin-bottom: 3px; }
+  .help-box .key {
+    display: inline-block;
+    background: var(--btn);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 10px;
+    color: var(--text);
+    font-family: monospace;
+  }
+  .help-close {
+    position: sticky;
+    top: 0;
+    float: right;
+    font-size: 14px;
+    background: var(--btn-clear);
+    border: none;
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 1;
+  }
+  .help-close:hover { background: var(--btn-clear-hover); }
+
+  /* ========== MOBILE ========== */
+  .mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 48px;
+    background: var(--pane-bg);
+    border-top: 1px solid var(--border);
+    z-index: 50;
+  }
+  .mobile-nav-inner {
+    display: flex;
+    height: 100%;
+  }
+  .mobile-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 9px;
+    cursor: pointer;
+    gap: 2px;
+    border-top: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .mobile-nav-btn.active {
+    color: var(--accent);
+    border-top-color: var(--accent);
+    background: rgba(13,110,253,0.08);
+  }
+  .mobile-nav-btn .nav-icon { font-size: 18px; }
+
+  @media (max-width: 768px) {
+    .grid {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+      height: calc(100vh - 36px - 48px);
+    }
+    .calc-pane { display: none; border-radius: 0; }
+    .calc-pane.mobile-visible { display: flex; }
+    .mobile-nav { display: block; }
+    .header .hint { display: none; }
+    .display { font-size: 36px; min-height: 44px; line-height: 44px; }
+    .sub-display { font-size: 13px; }
+    .btn { font-size: 18px; border-radius: 8px; min-height: 44px; }
+    .btn.tax, .btn.biz { font-size: 12px; }
+    .pane-tab { font-size: 10px; padding: 4px 8px; }
+    .history-area { max-height: 52px; }
+    .conv-input { font-size: 16px; padding: 10px 8px; }
+    .wari-input { font-size: 22px; padding: 10px; }
+    .wari-result .amount { font-size: 38px; }
+    .date-input { font-size: 16px; padding: 10px; }
+  }
+
+  @media (max-width: 400px) {
+    .btn { font-size: 16px; }
+    .btn.tax, .btn.biz { font-size: 10px; }
+    .display { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>QUAD<em>CALC</em></h1>
+  <div class="hint" id="headerHint"></div>
+  <div class="header-actions">
+    <button class="header-btn" id="helpBtn">?</button>
+    <button class="header-btn lang-toggle" id="langBtn">EN</button>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<!-- Mobile bottom nav -->
+<div class="mobile-nav">
+  <div class="mobile-nav-inner" id="mobileNav"></div>
+</div>
+
+<!-- Help overlay -->
+<div class="help-overlay" id="helpOverlay">
+  <div class="help-box" id="helpContent"></div>
+</div>
+
+<script>
+(() => {
+  // ==================== i18n ====================
+  let lang = localStorage.getItem('quadcalc-lang') || 'ja';
+
+  const T = {
+    ja: {
+      subtitle: '日本オフィス版',
+      hint: 'ドラッグで結果移動 · Alt+1-4 切替 · キーボード対応',
+      calc: '電卓', unit: '単位', warikan: '割勘', date: '日数',
+      clearHist: '履歴消去',
+      // Calc buttons
+      taxIn10: '税込10%', taxIn8: '税込8%', taxEx10: '税抜10%', taxEx8: '税抜8%',
+      man: '万', discount: '割引%', margin: '粗利%',
+      // Tax sub
+      taxAmount: '税額',
+      base: '本体',
+      taxIncl: '税込',
+      taxExcl: '税抜',
+      // Biz
+      manUnit: '万',
+      discountLabel: '割引',
+      discountSaved: '値引額',
+      discountHelp1: '金額 → 演算 → %入力 → 割引%',
+      discountHelp2: '使い方: 金額入力 → ×/-/+ → %入力 → 割引%',
+      marginLabel: '粗利',
+      marginSell: '売値',
+      marginCost: '原価',
+      marginHelp1: '売値 → 演算 → 原価 → 粗利%',
+      marginHelp2: '使い方: 売値入力 → 演算 → 原価入力 → 粗利%',
+      // Unit
+      length: '長さ', area: '面積', weight: '重さ', temp: '温度',
+      // Warikan
+      totalAmount: '合計金額', people: '人数',
+      perPerson: '一人あたり',
+      evenSplit: 'ちょうど割り切れます',
+      remainder: '端数調整',
+      organizerPaysMore: '幹事が多く払う',
+      organizerPaysLess: '幹事が少なく払う',
+      // Date
+      startDate: '開始日', endDate: '終了日',
+      days: '日間', daysBefore: '日前',
+      bizDays: '営業日', weeks: '週', approxMonths: '約ヶ月',
+      // Help
+      helpTitle: 'QuadCalc 使い方ガイド',
+      helpClose: '閉じる',
+      helpBasic: '基本操作',
+      helpBasicItems: [
+        '4つの独立した電卓を同時に使えます',
+        'デスクトップ: 2×2グリッド表示',
+        'モバイル: 下のタブで電卓切替',
+        '各電卓で「電卓・単位・割勘・日数」の4モードを選べます',
+      ],
+      helpKeyboard: 'キーボード操作',
+      helpKeyItems: [
+        '<span class="key">Alt+1~4</span> 電卓の切替',
+        '<span class="key">0-9</span> <span class="key">.</span> 数字入力',
+        '<span class="key">+ - * /</span> 四則演算',
+        '<span class="key">Enter</span> / <span class="key">=</span> 計算実行',
+        '<span class="key">Escape</span> クリア',
+        '<span class="key">Backspace</span> 一文字消去',
+      ],
+      helpDrag: 'ドラッグ＆ドロップ',
+      helpDragItems: [
+        '表示されている数値をドラッグして別の電卓にドロップ',
+        '履歴の項目をクリックすると値を再利用',
+      ],
+      helpTax: '消費税計算',
+      helpTaxItems: [
+        '<b>税込10%/8%</b>: 金額を入力 → ボタンで税込価格を計算',
+        '<b>税抜10%/8%</b>: 税込金額を入力 → ボタンで本体価格と税額を表示',
+        '8%は軽減税率（食品・飲料用）',
+      ],
+      helpBiz: 'ビジネス機能',
+      helpBizItems: [
+        '<b>万</b>: 入力値×10,000（例: 50 → 500,000）',
+        '<b>割引%</b>: 金額入力 → 演算キー → 割引%入力 → 割引%ボタン',
+        '<b>粗利%</b>: 売値入力 → 演算キー → 原価入力 → 粗利%ボタン',
+      ],
+      helpUnit: '単位変換',
+      helpUnitItems: [
+        '長さ: mm, cm, m, km, inch, ft',
+        '面積: 坪, 畳, ㎡（日本の不動産単位対応）',
+        '重さ: g, kg, lb, oz',
+        '温度: ℃ ⇄ ℉',
+        '両方向変換可能 — どちらの欄にも入力できます',
+      ],
+      helpWarikan: '割り勘',
+      helpWarikanItems: [
+        '合計金額と人数を入力',
+        '一人あたりの金額（切り上げ）と端数を自動計算',
+      ],
+      helpDate: '日数計算',
+      helpDateItems: [
+        '開始日と終了日を選択',
+        '日数・営業日（土日除外）・週数・月数を自動計算',
+      ],
+      // Mobile nav
+      navCalc: ['1', '2', '3', '4'],
+    },
+    en: {
+      subtitle: 'Japan Office Edition',
+      hint: 'Drag results between panes · Alt+1-4 switch · Keyboard ready',
+      calc: 'Calc', unit: 'Units', warikan: 'Split', date: 'Days',
+      clearHist: 'Clear',
+      taxIn10: '+Tax10%', taxIn8: '+Tax8%', taxEx10: '-Tax10%', taxEx8: '-Tax8%',
+      man: '万(10K)', discount: 'Disc%', margin: 'Margin%',
+      taxAmount: 'Tax',
+      base: 'Base',
+      taxIncl: 'Tax incl.',
+      taxExcl: 'Tax excl.',
+      manUnit: '万',
+      discountLabel: 'Discount',
+      discountSaved: 'Saved',
+      discountHelp1: 'Amount → Op → % → Disc% btn',
+      discountHelp2: 'Enter amount → operator → discount % → Disc% button',
+      marginLabel: 'Margin',
+      marginSell: 'Sell',
+      marginCost: 'Cost',
+      marginHelp1: 'Sell → Op → Cost → Margin% btn',
+      marginHelp2: 'Enter sell price → operator → cost → Margin% button',
+      length: 'Length', area: 'Area', weight: 'Weight', temp: 'Temperature',
+      totalAmount: 'Total', people: 'People',
+      perPerson: 'Per person',
+      evenSplit: 'Splits evenly!',
+      remainder: 'Remainder',
+      organizerPaysMore: 'organizer pays more',
+      organizerPaysLess: 'organizer pays less',
+      startDate: 'Start', endDate: 'End',
+      days: 'days', daysBefore: 'days ago',
+      bizDays: 'Biz days', weeks: 'wk', approxMonths: '~mo',
+      helpTitle: 'QuadCalc User Guide',
+      helpClose: 'Close',
+      helpBasic: 'Basic Usage',
+      helpBasicItems: [
+        '4 independent calculators you can use simultaneously',
+        'Desktop: 2x2 grid layout',
+        'Mobile: tap bottom tabs to switch calculator',
+        'Each pane has 4 modes: Calc, Units, Split Bill, Day Counter',
+      ],
+      helpKeyboard: 'Keyboard Shortcuts',
+      helpKeyItems: [
+        '<span class="key">Alt+1~4</span> Switch calculator pane',
+        '<span class="key">0-9</span> <span class="key">.</span> Number input',
+        '<span class="key">+ - * /</span> Arithmetic',
+        '<span class="key">Enter</span> / <span class="key">=</span> Calculate',
+        '<span class="key">Escape</span> Clear',
+        '<span class="key">Backspace</span> Delete last digit',
+      ],
+      helpDrag: 'Drag & Drop',
+      helpDragItems: [
+        'Drag the display value and drop onto another calculator',
+        'Click any history item to reuse its result',
+      ],
+      helpTax: 'Consumption Tax (Japan)',
+      helpTaxItems: [
+        '<b>+Tax 10%/8%</b>: Enter amount → button calculates tax-inclusive price',
+        '<b>-Tax 10%/8%</b>: Enter tax-inclusive price → button shows base price & tax',
+        '8% is the reduced rate (food & beverages in Japan)',
+      ],
+      helpBiz: 'Business Functions',
+      helpBizItems: [
+        '<b>万(10K)</b>: Multiply by 10,000 (e.g. 50 → 500,000)',
+        '<b>Disc%</b>: Enter price → operator → discount % → Disc% button',
+        '<b>Margin%</b>: Enter selling price → operator → cost → Margin% button',
+      ],
+      helpUnit: 'Unit Converter',
+      helpUnitItems: [
+        'Length: mm, cm, m, km, inch, ft',
+        'Area: Tsubo(坪), Jou(畳), m² — Japanese real estate units',
+        'Weight: g, kg, lb, oz',
+        'Temperature: ℃ ⇄ ℉',
+        'Bidirectional — type in either field',
+      ],
+      helpWarikan: 'Bill Splitting (Warikan)',
+      helpWarikanItems: [
+        'Enter total amount and number of people',
+        'Auto-calculates per-person amount (rounded up) and remainder',
+      ],
+      helpDate: 'Day Counter',
+      helpDateItems: [
+        'Pick start and end dates',
+        'Shows total days, business days (excl. weekends), weeks & months',
+      ],
+      navCalc: ['1', '2', '3', '4'],
+    },
+  };
+
+  function t(key) { return T[lang][key]; }
+
+  // ==================== STATE ====================
+  const NUM_PANES = 4;
+  const MODES = ['calc', 'unit', 'warikan', 'date'];
+  const panes = [];
+  let activePane = 0;
+  let mobileVisible = 0;
+
+  function createState(i) {
+    return {
+      index: i, mode: 'calc',
+      current: '0', expression: '', subDisplay: '',
+      operator: null, operand: null, resetNext: false,
+      history: [],
+    };
+  }
+
+  // ==================== BUTTON DEFS ====================
+  function getCalcButtons() {
+    return [
+      { label: t('taxIn10'), type: 'tax', action: 'tax_in', rate: 0.10 },
+      { label: t('taxIn8'),  type: 'tax', action: 'tax_in', rate: 0.08 },
+      { label: t('taxEx10'), type: 'tax', action: 'tax_ex', rate: 0.10 },
+      { label: t('taxEx8'),  type: 'tax', action: 'tax_ex', rate: 0.08 },
+      { label: t('man'),     type: 'biz', action: 'man' },
+      { label: t('discount'),type: 'biz', action: 'discount' },
+      { label: t('margin'),  type: 'biz', action: 'margin' },
+      { label: '√',          type: 'op',  action: 'sqrt' },
+      { label: 'C',  type: 'clear', action: 'clear' },
+      { label: '±',  type: 'op',    action: 'negate' },
+      { label: '%',  type: 'op',    action: 'percent' },
+      { label: '÷',  type: 'op',    action: 'op', value: '/' },
+      { label: '7', type: '', action: 'digit', value: '7' },
+      { label: '8', type: '', action: 'digit', value: '8' },
+      { label: '9', type: '', action: 'digit', value: '9' },
+      { label: '×', type: 'op', action: 'op', value: '*' },
+      { label: '4', type: '', action: 'digit', value: '4' },
+      { label: '5', type: '', action: 'digit', value: '5' },
+      { label: '6', type: '', action: 'digit', value: '6' },
+      { label: '−', type: 'op', action: 'op', value: '-' },
+      { label: '1', type: '', action: 'digit', value: '1' },
+      { label: '2', type: '', action: 'digit', value: '2' },
+      { label: '3', type: '', action: 'digit', value: '3' },
+      { label: '+', type: 'op', action: 'op', value: '+' },
+      { label: '0',  type: 'wide', action: 'digit', value: '0' },
+      { label: '.',  type: '',     action: 'decimal' },
+      { label: '=',  type: 'eq',   action: 'equals' },
+    ];
+  }
+
+  // ==================== UNIT GROUPS ====================
+  function getUnitGroups() {
+    return [
+      {
+        category: t('length'),
+        pairs: [
+          { from: 'mm', to: 'cm', factor: 0.1 },
+          { from: 'cm', to: 'm', factor: 0.01 },
+          { from: 'm', to: 'km', factor: 0.001 },
+          { from: 'inch', to: 'cm', factor: 2.54 },
+          { from: 'ft', to: 'm', factor: 0.3048 },
+        ]
+      },
+      {
+        category: t('area'),
+        pairs: [
+          { from: '坪', to: '㎡', factor: 3.30579 },
+          { from: '畳', to: '㎡', factor: 1.62 },
+          { from: '㎡', to: '坪', factor: 0.3025 },
+        ]
+      },
+      {
+        category: t('weight'),
+        pairs: [
+          { from: 'g', to: 'kg', factor: 0.001 },
+          { from: 'kg', to: 'lb', factor: 2.20462 },
+          { from: 'oz', to: 'g', factor: 28.3495 },
+        ]
+      },
+      {
+        category: t('temp'),
+        pairs: [
+          { from: '℃', to: '℉', factor: null, convert: v => v*9/5+32, reverse: v => (v-32)*5/9 },
+        ]
+      },
+    ];
+  }
+
+  // ==================== BUILD DOM ====================
+  const grid = document.getElementById('grid');
+
+  function buildAll() {
+    grid.innerHTML = '';
+    panes.length = 0;
+
+    document.getElementById('headerHint').textContent = t('hint');
+
+    for (let i = 0; i < NUM_PANES; i++) {
+      const state = (window._savedStates && window._savedStates[i]) || createState(i);
+      state.index = i;
+      buildPane(state);
+    }
+
+    buildMobileNav();
+    buildHelp();
+    setActive(activePane);
+    setMobileVisible(mobileVisible);
+    panes.forEach((_, i) => { renderPane(i); renderCalc(i); });
+  }
+
+  function buildPane(state) {
+    const i = state.index;
+    const pane = document.createElement('div');
+    pane.className = 'calc-pane';
+    pane.dataset.index = i;
+
+    // Header
+    const ph = document.createElement('div');
+    ph.className = 'pane-header';
+
+    const label = document.createElement('div');
+    label.className = 'pane-label';
+    label.textContent = `CALC ${i+1}`;
+
+    const right = document.createElement('div');
+    right.className = 'pane-right';
+
+    const tabs = document.createElement('div');
+    tabs.className = 'pane-tabs';
+    MODES.forEach(mode => {
+      const tab = document.createElement('div');
+      tab.className = 'pane-tab' + (mode === state.mode ? ' active' : '');
+      tab.textContent = t(mode === 'warikan' ? 'warikan' : mode === 'date' ? 'date' : mode);
+      tab.dataset.mode = mode;
+      tab.addEventListener('click', e => {
+        e.stopPropagation();
+        state.mode = mode;
+        setActive(i);
+        renderPane(i);
+      });
+      tabs.appendChild(tab);
+    });
+
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'clear-hist-btn';
+    clearBtn.textContent = t('clearHist');
+    clearBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      state.history = [];
+      renderCalc(i);
+    });
+
+    right.append(tabs, clearBtn);
+    ph.append(label, right);
+    pane.appendChild(ph);
+
+    // Display
+    const da = document.createElement('div');
+    da.className = 'display-area';
+    const expr = document.createElement('div');
+    expr.className = 'expression';
+    const display = document.createElement('div');
+    display.className = 'display';
+    display.textContent = state.current;
+    display.draggable = true;
+    const subDisplay = document.createElement('div');
+    subDisplay.className = 'sub-display';
+    da.append(expr, display, subDisplay);
+    pane.appendChild(da);
+
+    // History
+    const histArea = document.createElement('div');
+    histArea.className = 'history-area';
+    pane.appendChild(histArea);
+
+    // Calc buttons
+    const btnGrid = document.createElement('div');
+    btnGrid.className = 'buttons';
+    getCalcButtons().forEach(def => {
+      const btn = document.createElement('button');
+      btn.className = 'btn';
+      if (def.type) btn.classList.add(def.type);
+      btn.textContent = def.label;
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        setActive(i);
+        handleButton(state, def);
+        renderCalc(i);
+      });
+      btnGrid.appendChild(btn);
+    });
+    pane.appendChild(btnGrid);
+
+    // Unit converter
+    const convPanel = document.createElement('div');
+    convPanel.className = 'converter-panel';
+    getUnitGroups().forEach(group => {
+      const cat = document.createElement('div');
+      cat.className = 'conv-category';
+      cat.textContent = group.category;
+      convPanel.appendChild(cat);
+      group.pairs.forEach(pair => {
+        const row = document.createElement('div');
+        row.className = 'conv-row';
+        const lbl1 = document.createElement('label'); lbl1.textContent = pair.from;
+        const inp1 = document.createElement('input'); inp1.className = 'conv-input'; inp1.type = 'number'; inp1.inputMode = 'decimal'; inp1.placeholder = '0';
+        const arrow = document.createElement('span'); arrow.className = 'conv-arrow'; arrow.textContent = '⇄';
+        const lbl2 = document.createElement('label'); lbl2.textContent = pair.to;
+        const inp2 = document.createElement('input'); inp2.className = 'conv-input'; inp2.type = 'number'; inp2.inputMode = 'decimal'; inp2.placeholder = '0';
+        inp1.addEventListener('input', () => {
+          const v = parseFloat(inp1.value);
+          if (isNaN(v)) { inp2.value = ''; return; }
+          inp2.value = pair.convert ? pair.convert(v).toFixed(4).replace(/\.?0+$/,'') : (v*pair.factor).toFixed(6).replace(/\.?0+$/,'');
+        });
+        inp2.addEventListener('input', () => {
+          const v = parseFloat(inp2.value);
+          if (isNaN(v)) { inp1.value = ''; return; }
+          inp1.value = pair.reverse ? pair.reverse(v).toFixed(4).replace(/\.?0+$/,'') : (v/pair.factor).toFixed(6).replace(/\.?0+$/,'');
+        });
+        row.append(lbl1, inp1, arrow, inp2, lbl2);
+        convPanel.appendChild(row);
+      });
+    });
+    pane.appendChild(convPanel);
+
+    // Warikan
+    const wariPanel = document.createElement('div');
+    wariPanel.className = 'warikan-panel';
+    const wariTotal = mkInput(wariPanel, t('totalAmount'), 'number');
+    const wariPeople = mkInput(wariPanel, t('people'), 'number');
+    const wariResult = document.createElement('div');
+    wariResult.className = 'wari-result';
+    wariResult.innerHTML = `<div class="amount">¥0</div><div class="wr-label">${esc(t('perPerson'))}</div><div class="remainder"></div>`;
+    wariPanel.appendChild(wariResult);
+    function updateWarikan() {
+      const total = parseFloat(wariTotal.value) || 0;
+      const people = parseInt(wariPeople.value) || 1;
+      const pp = Math.ceil(total / people);
+      const rem = total - (pp * people);
+      wariResult.querySelector('.amount').textContent = '¥' + pp.toLocaleString();
+      wariResult.querySelector('.wr-label').textContent = t('perPerson');
+      const remEl = wariResult.querySelector('.remainder');
+      if (rem !== 0)
+        remEl.textContent = `${t('remainder')}: ¥${Math.abs(rem).toLocaleString()} (${rem < 0 ? t('organizerPaysMore') : t('organizerPaysLess')})`;
+      else
+        remEl.textContent = t('evenSplit');
+    }
+    wariTotal.addEventListener('input', updateWarikan);
+    wariPeople.addEventListener('input', updateWarikan);
+    pane.appendChild(wariPanel);
+
+    // Date
+    const datePanel = document.createElement('div');
+    datePanel.className = 'date-panel';
+    const dateFrom = mkDateInput(datePanel, t('startDate'));
+    const dateTo = mkDateInput(datePanel, t('endDate'));
+    const dateResult = document.createElement('div');
+    dateResult.className = 'date-result';
+    dateResult.innerHTML = `<div class="days">0</div><div class="dr-label">${esc(t('days'))}</div><div class="detail"></div>`;
+    datePanel.appendChild(dateResult);
+    dateFrom.value = fmtDate(new Date());
+    function updateDate() {
+      const d1 = new Date(dateFrom.value), d2 = new Date(dateTo.value);
+      if (isNaN(d1) || isNaN(d2)) return;
+      const diff = Math.round((d2-d1)/(864e5));
+      const ad = Math.abs(diff);
+      dateResult.querySelector('.days').textContent = ad;
+      dateResult.querySelector('.dr-label').textContent = diff >= 0 ? t('days') : t('daysBefore');
+      let biz = 0;
+      const step = diff >= 0 ? 1 : -1, s = new Date(d1);
+      for (let j = 0; j < ad; j++) { s.setDate(s.getDate()+step); const d=s.getDay(); if(d!==0&&d!==6) biz++; }
+      dateResult.querySelector('.detail').textContent =
+        `${t('bizDays')}: ${biz} / ${Math.floor(ad/7)}${t('weeks')} / ${(ad/30.44).toFixed(1)}${t('approxMonths')}`;
+    }
+    dateFrom.addEventListener('input', updateDate);
+    dateTo.addEventListener('input', updateDate);
+    pane.appendChild(datePanel);
+
+    // Events
+    pane.addEventListener('mousedown', () => setActive(i));
+    display.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', state.current);
+      display.classList.add('dragging');
+    });
+    display.addEventListener('dragend', () => display.classList.remove('dragging'));
+    pane.addEventListener('dragover', e => { e.preventDefault(); pane.classList.add('drag-over'); });
+    pane.addEventListener('dragleave', () => pane.classList.remove('drag-over'));
+    pane.addEventListener('drop', e => {
+      e.preventDefault(); pane.classList.remove('drag-over');
+      const data = e.dataTransfer.getData('text/plain');
+      if (data && !isNaN(parseFloat(data))) {
+        state.current = data; state.resetNext = true;
+        setActive(i); renderCalc(i);
+      }
+    });
+
+    grid.appendChild(pane);
+    panes.push({ state, el: pane, display, expr, subDisplay, histArea, btnGrid, convPanel, wariPanel, datePanel, tabs, clearBtn });
+  }
+
+  // ==================== MOBILE NAV ====================
+  function buildMobileNav() {
+    const nav = document.getElementById('mobileNav');
+    nav.innerHTML = '';
+    for (let i = 0; i < NUM_PANES; i++) {
+      const btn = document.createElement('button');
+      btn.className = 'mobile-nav-btn' + (i === mobileVisible ? ' active' : '');
+      btn.innerHTML = `<span class="nav-icon">${['⬜','⬜','⬜','⬜'][i]}</span>CALC ${i+1}`;
+      btn.addEventListener('click', () => setMobileVisible(i));
+      nav.appendChild(btn);
+    }
+  }
+
+  function setMobileVisible(i) {
+    mobileVisible = i;
+    panes.forEach((p, j) => p.el.classList.toggle('mobile-visible', j === i));
+    document.querySelectorAll('.mobile-nav-btn').forEach((b, j) => b.classList.toggle('active', j === i));
+    setActive(i);
+  }
+
+  // ==================== HELP ====================
+  function buildHelp() {
+    const box = document.getElementById('helpContent');
+    const sections = [
+      ['helpBasic', 'helpBasicItems'],
+      ['helpKeyboard', 'helpKeyItems'],
+      ['helpDrag', 'helpDragItems'],
+      ['helpTax', 'helpTaxItems'],
+      ['helpBiz', 'helpBizItems'],
+      ['helpUnit', 'helpUnitItems'],
+      ['helpWarikan', 'helpWarikanItems'],
+      ['helpDate', 'helpDateItems'],
+    ];
+    let html = `<button class="help-close" id="helpClose">${esc(t('helpClose'))}</button>`;
+    html += `<h2>${esc(t('helpTitle'))}</h2>`;
+    sections.forEach(([title, items]) => {
+      html += `<h3>${esc(t(title))}</h3><ul>`;
+      t(items).forEach(item => { html += `<li>${item}</li>`; });
+      html += '</ul>';
+    });
+    box.innerHTML = html;
+    document.getElementById('helpClose').addEventListener('click', () => {
+      document.getElementById('helpOverlay').classList.remove('visible');
+    });
+  }
+
+  // ==================== HELPERS ====================
+  function mkInput(parent, labelText, type) {
+    const f = document.createElement('div'); f.className = 'wari-field';
+    const l = document.createElement('label'); l.textContent = labelText;
+    const inp = document.createElement('input'); inp.className = 'wari-input'; inp.type = type; inp.inputMode = 'decimal'; inp.placeholder = '0';
+    f.append(l, inp); parent.appendChild(f);
+    return inp;
+  }
+  function mkDateInput(parent, labelText) {
+    const f = document.createElement('div'); f.className = 'date-field';
+    const l = document.createElement('label'); l.textContent = labelText;
+    const inp = document.createElement('input'); inp.className = 'date-input'; inp.type = 'date';
+    f.append(l, inp); parent.appendChild(f);
+    return inp;
+  }
+  function fmtDate(d) {
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function fmtNum(n) {
+    if (n==='Error') return 'Error';
+    if (typeof n==='string') return n;
+    const s = parseFloat(n.toPrecision(12)).toString();
+    return s.length > 15 ? parseFloat(n).toExponential(6) : s;
+  }
+  function fmtComma(n) { return Math.round(n).toLocaleString('ja-JP'); }
+  function fmtYen(n) { return '¥'+fmtComma(n); }
+
+  // ==================== ACTIVE PANE ====================
+  function setActive(index) {
+    activePane = index;
+    document.querySelectorAll('.calc-pane').forEach((p,j) => p.classList.toggle('active', j===index));
+  }
+
+  // ==================== MODE RENDER ====================
+  function renderPane(i) {
+    const p = panes[i], mode = p.state.mode;
+    p.tabs.querySelectorAll('.pane-tab').forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+    p.btnGrid.style.display = mode==='calc' ? 'grid' : 'none';
+    p.convPanel.classList.toggle('visible', mode==='unit');
+    p.wariPanel.classList.toggle('visible', mode==='warikan');
+    p.datePanel.classList.toggle('visible', mode==='date');
+    p.el.querySelector('.display-area').style.display = mode==='calc' ? '' : 'none';
+    p.histArea.style.display = mode==='calc' ? '' : 'none';
+    p.clearBtn.style.display = mode==='calc' ? '' : 'none';
+  }
+
+  // ==================== CALC LOGIC ====================
+  const OPS = { '+': (a,b)=>a+b, '-': (a,b)=>a-b, '*': (a,b)=>a*b, '/': (a,b)=>b===0?'Error':a/b };
+  const OP_SYM = { '+':'+', '-':'−', '*':'×', '/':'÷' };
+
+  function handleButton(s, def) {
+    switch(def.action) {
+      case 'digit':
+        if (s.resetNext) { s.current=''; s.resetNext=false; s.subDisplay=''; }
+        if (s.current==='0' && def.value!=='0') s.current='';
+        if (s.current.length<15) s.current+=def.value;
+        break;
+      case 'decimal':
+        if (s.resetNext) { s.current='0'; s.resetNext=false; s.subDisplay=''; }
+        if (!s.current.includes('.')) s.current+='.';
+        break;
+      case 'op':
+        if (s.operator && !s.resetNext) {
+          const r = compute(s); if (r==='Error') { reset(s); s.current='Error'; return; }
+          s.current = fmtNum(r);
+        }
+        s.operand = parseFloat(s.current);
+        s.operator = def.value;
+        s.expression = `${fmtNum(s.operand)} ${OP_SYM[def.value]}`;
+        s.resetNext = true; s.subDisplay = '';
+        break;
+      case 'equals':
+        if (s.operator) {
+          const b=parseFloat(s.current), a=s.operand;
+          const ex = `${fmtNum(a)} ${OP_SYM[s.operator]} ${fmtNum(b)}`;
+          const r = compute(s); if (r==='Error') { reset(s); s.current='Error'; return; }
+          addHist(s, ex, r);
+          s.current=fmtNum(r); s.expression=''; s.operator=null; s.operand=null; s.resetNext=true; s.subDisplay='';
+        }
+        break;
+      case 'clear': reset(s); break;
+      case 'negate':
+        if (s.current!=='0'&&s.current!=='Error')
+          s.current = s.current.startsWith('-') ? s.current.slice(1) : '-'+s.current;
+        break;
+      case 'percent': s.current = fmtNum(parseFloat(s.current)/100); break;
+      case 'sqrt': {
+        const v=parseFloat(s.current);
+        if (v<0) { s.current='Error'; return; }
+        const r=Math.sqrt(v); addHist(s,`√${fmtNum(v)}`,r);
+        s.current=fmtNum(r); s.resetNext=true;
+        break;
+      }
+      case 'tax_in': {
+        const v=parseFloat(s.current), taxed=v*(1+def.rate), tax=v*def.rate;
+        s.expression = `${fmtYen(v)} × ${def.rate*100}% ${t('taxIncl')}`;
+        s.subDisplay = `${t('taxAmount')}: ¥${fmtComma(Math.round(tax))}`;
+        addHist(s, `${fmtYen(v)} ${t('taxIncl')}${def.rate*100}%`, taxed);
+        s.current=fmtNum(Math.round(taxed)); s.resetNext=true;
+        break;
+      }
+      case 'tax_ex': {
+        const v=parseFloat(s.current), base=v/(1+def.rate), tax=v-base;
+        s.expression = `${fmtYen(v)} ${t('taxExcl')}${def.rate*100}%`;
+        s.subDisplay = `${t('taxAmount')}: ¥${fmtComma(Math.round(tax))} / ${t('base')}: ¥${fmtComma(Math.round(base))}`;
+        addHist(s, `${fmtYen(v)} ${t('taxExcl')}${def.rate*100}%`, base);
+        s.current=fmtNum(Math.round(base)); s.resetNext=true;
+        break;
+      }
+      case 'man': {
+        const v=parseFloat(s.current);
+        s.current=fmtNum(v*10000);
+        s.expression=`${fmtNum(v)}${t('manUnit')}`;
+        s.subDisplay=`¥${fmtComma(Math.round(v*10000))}`;
+        s.resetNext=true;
+        break;
+      }
+      case 'discount': {
+        const v=parseFloat(s.current);
+        if (s.operator && s.operand!==null) {
+          const disc=s.operand*(1-v/100), saved=s.operand*(v/100);
+          s.expression=`${fmtYen(s.operand)} − ${fmtNum(v)}% ${t('discountLabel')}`;
+          s.subDisplay=`${t('discountSaved')}: ¥${fmtComma(Math.round(saved))}`;
+          addHist(s,`${fmtYen(s.operand)} ${fmtNum(v)}%${t('discountLabel')}`,disc);
+          s.current=fmtNum(Math.round(disc)); s.operator=null; s.operand=null;
+        } else {
+          s.expression=t('discountHelp1'); s.subDisplay=t('discountHelp2');
+        }
+        s.resetNext=true;
+        break;
+      }
+      case 'margin': {
+        const v=parseFloat(s.current);
+        if (s.operator && s.operand!==null) {
+          const sell=s.operand, cost=v, profit=sell-cost, rate=(profit/sell)*100;
+          s.expression=`${t('marginSell')}¥${fmtComma(sell)} − ${t('marginCost')}¥${fmtComma(cost)}`;
+          s.subDisplay=`${t('marginLabel')}: ¥${fmtComma(Math.round(profit))} (${rate.toFixed(1)}%)`;
+          addHist(s,`${t('marginLabel')} ${fmtYen(sell)}-${fmtYen(cost)}`,profit);
+          s.current=fmtNum(Math.round(profit)); s.operator=null; s.operand=null;
+        } else {
+          s.expression=t('marginHelp1'); s.subDisplay=t('marginHelp2');
+        }
+        s.resetNext=true;
+        break;
+      }
+    }
+  }
+
+  function compute(s) { return OPS[s.operator](s.operand, parseFloat(s.current)); }
+  function reset(s) { s.current='0'; s.expression=''; s.subDisplay=''; s.operator=null; s.operand=null; s.resetNext=false; }
+  function addHist(s, expr, result) {
+    s.history.unshift({ expr, result: fmtNum(result) });
+    if (s.history.length > 50) s.history.pop();
+  }
+
+  // ==================== RENDER CALC ====================
+  function renderCalc(i) {
+    const p = panes[i], s = p.state;
+    p.display.textContent = s.current;
+    p.expr.textContent = s.expression;
+    p.subDisplay.textContent = s.subDisplay;
+    p.histArea.innerHTML = '';
+    s.history.forEach(h => {
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      item.innerHTML = `${esc(h.expr)} = <span class="hist-result">${esc(h.result)}</span>`;
+      item.addEventListener('click', () => { s.current=h.result; s.resetNext=true; renderCalc(i); });
+      p.histArea.appendChild(item);
+    });
+  }
+
+  // ==================== KEYBOARD ====================
+  document.addEventListener('keydown', e => {
+    if (e.altKey && e.key>='1' && e.key<='4') { e.preventDefault(); setActive(+e.key-1); setMobileVisible(+e.key-1); return; }
+    const s = panes[activePane].state;
+    if (s.mode !== 'calc') return;
+    const defs = getCalcButtons();
+    if (e.key>='0'&&e.key<='9') handleButton(s,{action:'digit',value:e.key});
+    else if (e.key==='.') handleButton(s,{action:'decimal'});
+    else if (e.key==='+') handleButton(s,{action:'op',value:'+'});
+    else if (e.key==='-') handleButton(s,{action:'op',value:'-'});
+    else if (e.key==='*') handleButton(s,{action:'op',value:'*'});
+    else if (e.key==='/') { e.preventDefault(); handleButton(s,{action:'op',value:'/'}); }
+    else if (e.key==='Enter'||e.key==='=') handleButton(s,{action:'equals'});
+    else if (e.key==='Escape'||e.key==='Delete') handleButton(s,{action:'clear'});
+    else if (e.key==='Backspace') { s.current = s.current.length>1 ? s.current.slice(0,-1) : '0'; }
+    else if (e.key==='%') handleButton(s,{action:'percent'});
+    else return;
+    renderCalc(activePane);
+  });
+
+  // ==================== HEADER ACTIONS ====================
+  document.getElementById('helpBtn').addEventListener('click', () => {
+    document.getElementById('helpOverlay').classList.toggle('visible');
+  });
+  document.getElementById('helpOverlay').addEventListener('click', e => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('visible');
+  });
+  document.getElementById('langBtn').addEventListener('click', () => {
+    // Save states
+    window._savedStates = panes.map(p => p.state);
+    lang = lang === 'ja' ? 'en' : 'ja';
+    localStorage.setItem('quadcalc-lang', lang);
+    document.getElementById('langBtn').textContent = lang === 'ja' ? 'EN' : 'JP';
+    buildAll();
+  });
+
+  // ==================== INIT ====================
+  document.getElementById('langBtn').textContent = lang === 'ja' ? 'EN' : 'JP';
+  buildAll();
+})();
+</script>
+</body>
+</html>
