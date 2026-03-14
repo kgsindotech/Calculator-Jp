@@ -460,24 +460,26 @@
     .grid {
       grid-template-columns: 1fr;
       grid-template-rows: 1fr;
-      height: calc(100vh - 36px - 52px - env(safe-area-inset-bottom, 0px));
+      height: calc(100dvh - 36px - 52px - env(safe-area-inset-bottom, 0px));
+      height: calc(100svh - 36px - 52px - env(safe-area-inset-bottom, 0px));
       padding: 0;
+      overflow: hidden;
     }
-    .calc-pane { display: none; border-radius: 0; border: none; }
+    .calc-pane { display: none; border-radius: 0; border: none; overflow: hidden; }
     .calc-pane.mobile-visible { display: flex; }
     .calc-pane.active { border: none; }
     .mobile-nav { display: block; }
     .header .hint { display: none; }
-    .display { font-size: 32px; min-height: 40px; line-height: 40px; }
-    .sub-display { font-size: 12px; min-height: 14px; }
-    .expression { font-size: 11px; min-height: 14px; }
-    .display-area { padding: 1px 10px; }
-    .buttons { gap: 3px; padding: 3px 4px; }
-    .btn { font-size: 18px; border-radius: 8px; }
-    .btn.tax, .btn.biz { font-size: 12px; }
-    .pane-header { padding: 2px 8px; min-height: 28px; }
-    .pane-tab { font-size: 10px; padding: 4px 8px; }
-    .history-area { max-height: 40px; padding: 1px 10px; }
+    .display { font-size: 28px; min-height: 34px; line-height: 34px; }
+    .sub-display { font-size: 11px; min-height: 12px; line-height: 12px; }
+    .expression { font-size: 10px; min-height: 12px; }
+    .display-area { padding: 0 8px; }
+    .buttons { gap: 2px; padding: 2px 3px; }
+    .btn { font-size: 17px; border-radius: 8px; }
+    .btn.tax, .btn.biz { font-size: 11px; }
+    .pane-header { padding: 2px 6px; min-height: 24px; }
+    .pane-tab { font-size: 9px; padding: 3px 6px; }
+    .history-area { max-height: 0; padding: 0; overflow: hidden; border: none; }
     .conv-input { font-size: 16px; padding: 10px 8px; }
     .wari-input { font-size: 22px; padding: 10px; }
     .wari-result .amount { font-size: 38px; }
