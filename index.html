@@ -379,6 +379,104 @@
     text-align: center;
     padding: 2px;
   }
+
+  /* ========== KINTAI SALARY SECTION ========== */
+  .salary-section {
+    border-top: 1px solid var(--border);
+    padding-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .salary-section-title {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--accent-orange);
+    text-transform: uppercase;
+  }
+  .salary-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .salary-field label {
+    font-size: 11px;
+    color: var(--text-mid);
+    min-width: 80px;
+    flex-shrink: 0;
+  }
+  .salary-input {
+    flex: 1;
+    background: var(--display-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 14px;
+    padding: 6px 8px;
+    text-align: right;
+    outline: none;
+    font-family: inherit;
+    min-width: 0;
+  }
+  .salary-input:focus { border-color: var(--accent-orange); }
+  .salary-input-unit {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .ot-preset-row {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .ot-preset {
+    font-size: 10px;
+    padding: 3px 7px;
+    border-radius: 4px;
+    background: var(--btn);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.1s;
+  }
+  .ot-preset:hover { background: var(--btn-hover); color: var(--text); }
+  .ot-preset.active { background: var(--accent-orange); color: #fff; border-color: var(--accent-orange); }
+  .salary-result {
+    background: #1a1500;
+    border: 1px solid #4a3800;
+    border-radius: 6px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .salary-result-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-mid);
+  }
+  .salary-result-row.total {
+    border-top: 1px solid #4a3800;
+    padding-top: 5px;
+    margin-top: 2px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent-orange);
+  }
+  .salary-result-row .val {
+    font-family: 'Segoe UI', monospace;
+    color: var(--text);
+  }
+  .salary-result-row.total .val {
+    color: var(--accent-orange);
+  }
+  .salary-result-row .ot-val {
+    color: #ff9944;
+  }
   .date-field { display: flex; align-items: center; gap: 6px; }
   .date-field label { font-size: 13px; color: var(--text-mid); min-width: 50px; }
   .date-input {
@@ -686,11 +784,27 @@
       kintaiNote: '休憩なしの場合は空欄でOK',
       kintaiHours: '時間',
       kintaiMinutes: '分',
+      // Salary
+      salarySectionTitle: '残業代計算',
+      salaryDailyLabel: '日給',
+      salaryHourlyLabel: '時給',
+      salaryStdHrsLabel: '所定時間/日',
+      salaryOtPctLabel: '残業割増率',
+      salaryOtPresets: ['法定25%','深夜35%','休日60%'],
+      salaryOtPresetsVal: [25, 35, 60],
+      salaryRegHrs: '所定内',
+      salaryOtHrs: '残業時間',
+      salaryRegPay: '所定内賃金',
+      salaryOtPay: '残業代',
+      salaryTotal: '合計支給',
+      salaryHourRate: '時給換算',
+      salaryNoOt: '残業なし',
       helpKintai: '勤怠計算',
       helpKintaiItems: [
         '出勤・退勤時間を入力して実働時間を自動計算',
         '休憩時間（分）を入力可能（任意）',
         '総拘束時間・休憩時間・実働時間を表示',
+        '残業代計算: 日給または時給・所定時間・割増率を入力すると残業代を自動算出',
       ],
       // Mobile nav
       navCalc: ['1', '2', '3', '4'],
@@ -790,11 +904,27 @@
       kintaiNote: 'Leave break empty if none',
       kintaiHours: 'hrs',
       kintaiMinutes: 'min',
+      // Salary
+      salarySectionTitle: 'Overtime Pay',
+      salaryDailyLabel: 'Daily Salary',
+      salaryHourlyLabel: 'Hourly Rate',
+      salaryStdHrsLabel: 'Std hrs/day',
+      salaryOtPctLabel: 'OT Premium %',
+      salaryOtPresets: ['Legal 25%','Night 35%','Holiday 60%'],
+      salaryOtPresetsVal: [25, 35, 60],
+      salaryRegHrs: 'Regular hrs',
+      salaryOtHrs: 'Overtime hrs',
+      salaryRegPay: 'Regular pay',
+      salaryOtPay: 'OT pay',
+      salaryTotal: 'Total pay',
+      salaryHourRate: 'Hourly rate',
+      salaryNoOt: 'No overtime',
       helpKintai: 'Work Hours (Kintai)',
       helpKintaiItems: [
         'Enter clock-in and clock-out times to calculate work hours',
         'Optionally enter break time in minutes',
         'Shows total span, break time, and net working hours',
+        'Overtime Pay: enter daily salary or hourly rate, standard hours and premium % to auto-calculate overtime pay',
       ],
       navCalc: ['1', '2', '3', '4'],
     },
@@ -1110,6 +1240,98 @@
     kResult.innerHTML = `<div class="kintai-total">8:00</div><div class="kr-label">${esc(t('kintaiTotal'))}</div><div class="kintai-detail"></div>`;
     kintaiPanel.appendChild(kResult);
 
+    // ── Salary / Overtime section ──────────────────────────────────
+    const salarySection = document.createElement('div');
+    salarySection.className = 'salary-section';
+
+    const salTitle = document.createElement('div');
+    salTitle.className = 'salary-section-title';
+    salTitle.textContent = t('salarySectionTitle');
+    salarySection.appendChild(salTitle);
+
+    // Daily salary input
+    const sfDaily = document.createElement('div'); sfDaily.className = 'salary-field';
+    const slDaily = document.createElement('label'); slDaily.textContent = t('salaryDailyLabel');
+    const siDaily = document.createElement('input');
+    siDaily.className = 'salary-input'; siDaily.type = 'number'; siDaily.inputMode = 'decimal';
+    siDaily.placeholder = '0'; siDaily.min = '0';
+    const suDaily = document.createElement('span'); suDaily.className = 'salary-input-unit'; suDaily.textContent = '¥';
+    sfDaily.append(slDaily, siDaily, suDaily);
+    salarySection.appendChild(sfDaily);
+
+    // Hourly rate input (optional — overrides daily if filled)
+    const sfHourly = document.createElement('div'); sfHourly.className = 'salary-field';
+    const slHourly = document.createElement('label'); slHourly.textContent = t('salaryHourlyLabel');
+    const siHourly = document.createElement('input');
+    siHourly.className = 'salary-input'; siHourly.type = 'number'; siHourly.inputMode = 'decimal';
+    siHourly.placeholder = '0'; siHourly.min = '0';
+    const suHourly = document.createElement('span'); suHourly.className = 'salary-input-unit'; suHourly.textContent = '¥/h';
+    sfHourly.append(slHourly, siHourly, suHourly);
+    salarySection.appendChild(sfHourly);
+
+    // Standard hours per day
+    const sfStd = document.createElement('div'); sfStd.className = 'salary-field';
+    const slStd = document.createElement('label'); slStd.textContent = t('salaryStdHrsLabel');
+    const siStd = document.createElement('input');
+    siStd.className = 'salary-input'; siStd.type = 'number'; siStd.inputMode = 'decimal';
+    siStd.placeholder = '8'; siStd.min = '1'; siStd.max = '24'; siStd.value = '8';
+    const suStd = document.createElement('span'); suStd.className = 'salary-input-unit'; suStd.textContent = lang === 'ja' ? '時間' : 'hrs';
+    sfStd.append(slStd, siStd, suStd);
+    salarySection.appendChild(sfStd);
+
+    // Overtime premium %
+    const sfOt = document.createElement('div'); sfOt.className = 'salary-field';
+    const slOt = document.createElement('label'); slOt.textContent = t('salaryOtPctLabel');
+    const siOt = document.createElement('input');
+    siOt.className = 'salary-input'; siOt.type = 'number'; siOt.inputMode = 'decimal';
+    siOt.placeholder = '25'; siOt.min = '0'; siOt.value = '25';
+    const suOt = document.createElement('span'); suOt.className = 'salary-input-unit'; suOt.textContent = '%';
+    sfOt.append(slOt, siOt, suOt);
+    salarySection.appendChild(sfOt);
+
+    // OT preset buttons
+    const presetRow = document.createElement('div'); presetRow.className = 'ot-preset-row';
+    const presetLabels = t('salaryOtPresets');
+    const presetVals = t('salaryOtPresetsVal');
+    presetLabels.forEach((label, idx) => {
+      const pb = document.createElement('button');
+      pb.className = 'ot-preset' + (presetVals[idx] === 25 ? ' active' : '');
+      pb.textContent = label;
+      pb.addEventListener('click', e => {
+        e.stopPropagation();
+        siOt.value = presetVals[idx];
+        presetRow.querySelectorAll('.ot-preset').forEach(b => b.classList.remove('active'));
+        pb.classList.add('active');
+        updateKintai();
+      });
+      presetRow.appendChild(pb);
+    });
+    // Sync active state when user types in OT input
+    siOt.addEventListener('input', () => {
+      const v = parseFloat(siOt.value);
+      presetRow.querySelectorAll('.ot-preset').forEach((b, idx) => b.classList.toggle('active', presetVals[idx] === v));
+    });
+    salarySection.appendChild(presetRow);
+
+    // Salary result breakdown
+    const salResult = document.createElement('div');
+    salResult.className = 'salary-result';
+    salResult.innerHTML = `
+      <div class="salary-result-row"><span class="lbl">${esc(t('salaryHourRate'))}</span><span class="val" data-k="hourRate">—</span></div>
+      <div class="salary-result-row"><span class="lbl">${esc(t('salaryRegHrs'))}</span><span class="val" data-k="regHrs">—</span></div>
+      <div class="salary-result-row"><span class="lbl">${esc(t('salaryOtHrs'))}</span><span class="val ot-val" data-k="otHrs">—</span></div>
+      <div class="salary-result-row"><span class="lbl">${esc(t('salaryRegPay'))}</span><span class="val" data-k="regPay">—</span></div>
+      <div class="salary-result-row"><span class="lbl">${esc(t('salaryOtPay'))}</span><span class="val ot-val" data-k="otPay">—</span></div>
+      <div class="salary-result-row total"><span class="lbl">${esc(t('salaryTotal'))}</span><span class="val" data-k="totalPay">—</span></div>
+    `;
+    salarySection.appendChild(salResult);
+    kintaiPanel.appendChild(salarySection);
+
+    function fmtHrsMin(totalMins) {
+      const h = Math.floor(totalMins / 60), m = totalMins % 60;
+      return `${h}:${String(m).padStart(2,'0')}`;
+    }
+
     function updateKintai() {
       const startParts = kiStart.value.split(':');
       const endParts = kiEnd.value.split(':');
@@ -1137,16 +1359,55 @@
         detail += `\n${t('kintaiBreakLabel')}: ${breakH > 0 ? breakH + t('kintaiHours') + ' ' : ''}${breakM}${t('kintaiMinutes')}`;
       }
       detail += `\n${t('kintaiNet')}: ${netH}${t('kintaiHours')} ${netM}${t('kintaiMinutes')}`;
-      // Decimal hours (common for timesheets)
       const decimalHrs = (netMin / 60).toFixed(2);
       detail += ` (${decimalHrs}h)`;
-
       kResult.querySelector('.kintai-detail').textContent = detail;
       kResult.querySelector('.kintai-detail').style.whiteSpace = 'pre-line';
+
+      // ── Overtime pay calculation ──────────────────────────────────
+      const dailySal = parseFloat(siDaily.value) || 0;
+      const hourlySal = parseFloat(siHourly.value) || 0;
+      const stdHrs = parseFloat(siStd.value) || 8;
+      const otPct = parseFloat(siOt.value) || 25;
+      const stdMin = stdHrs * 60;
+
+      // Hourly rate: use hourly field if filled, otherwise derive from daily ÷ stdHrs
+      let hourlyRate = 0;
+      if (hourlySal > 0) {
+        hourlyRate = hourlySal;
+        // back-fill daily display hint
+      } else if (dailySal > 0) {
+        hourlyRate = dailySal / stdHrs;
+      }
+
+      const setVal = (key, text) => { const el = salResult.querySelector(`[data-k="${key}"]`); if (el) el.textContent = text; };
+
+      if (hourlyRate <= 0) {
+        ['hourRate','regHrs','otHrs','regPay','otPay','totalPay'].forEach(k => setVal(k, '—'));
+      } else {
+        const regMin = Math.min(netMin, stdMin);
+        const otMin  = Math.max(0, netMin - stdMin);
+        const regHrs  = regMin / 60;
+        const otHrs   = otMin  / 60;
+        const regPay  = regHrs * hourlyRate;
+        const otPay   = otHrs  * hourlyRate * (1 + otPct / 100);
+        const totalPay = regPay + otPay;
+
+        setVal('hourRate', `¥${hourlyRate.toLocaleString('ja-JP', {minimumFractionDigits:0, maximumFractionDigits:0})}/h`);
+        setVal('regHrs',  fmtHrsMin(regMin));
+        setVal('otHrs',   otMin > 0 ? fmtHrsMin(otMin) : t('salaryNoOt'));
+        setVal('regPay',  `¥${Math.round(regPay).toLocaleString('ja-JP')}`);
+        setVal('otPay',   otMin > 0 ? `¥${Math.round(otPay).toLocaleString('ja-JP')} (+${otPct}%)` : '¥0');
+        setVal('totalPay',`¥${Math.round(totalPay).toLocaleString('ja-JP')}`);
+      }
     }
     kiStart.addEventListener('input', updateKintai);
     kiEnd.addEventListener('input', updateKintai);
     kiBreak.addEventListener('input', updateKintai);
+    siDaily.addEventListener('input', () => { if (siDaily.value) siHourly.value = ''; updateKintai(); });
+    siHourly.addEventListener('input', () => { if (siHourly.value) siDaily.value = ''; updateKintai(); });
+    siStd.addEventListener('input', updateKintai);
+    siOt.addEventListener('input', updateKintai);
     updateKintai();
     pane.appendChild(kintaiPanel);
 
