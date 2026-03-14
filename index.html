@@ -460,8 +460,7 @@
     .grid {
       grid-template-columns: 1fr;
       grid-template-rows: 1fr;
-      height: calc(100dvh - 36px - 52px - env(safe-area-inset-bottom, 0px));
-      height: calc(100svh - 36px - 52px - env(safe-area-inset-bottom, 0px));
+      height: calc(var(--real-vh, 100vh) - 36px - 52px);
       padding: 0;
       overflow: hidden;
     }
@@ -1258,6 +1257,15 @@
     document.getElementById('langBtn').textContent = lang === 'ja' ? 'EN' : 'JP';
     buildAll();
   });
+
+  // ==================== REAL VIEWPORT HEIGHT (fixes Safari) ====================
+  function setRealVh() {
+    const vh = window.innerHeight;
+    document.documentElement.style.setProperty('--real-vh', vh + 'px');
+  }
+  setRealVh();
+  window.addEventListener('resize', setRealVh);
+  window.addEventListener('orientationchange', () => setTimeout(setRealVh, 100));
 
   // ==================== INIT ====================
   document.getElementById('langBtn').textContent = lang === 'ja' ? 'EN' : 'JP';
