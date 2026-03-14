@@ -317,6 +317,68 @@
   /* ========== DATE CALC ========== */
   .date-panel { display: none; flex-direction: column; padding: 8px; gap: 8px; flex: 1; }
   .date-panel.visible { display: flex; }
+
+  /* ========== KINTAI (ATTENDANCE) ========== */
+  .kintai-panel { display: none; flex-direction: column; padding: 8px; gap: 6px; flex: 1; overflow-y: auto; }
+  .kintai-panel.visible { display: flex; }
+  .kintai-field { display: flex; align-items: center; gap: 6px; }
+  .kintai-field label { font-size: 13px; color: var(--text-mid); min-width: 70px; }
+  .kintai-time {
+    flex: 1;
+    background: var(--display-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 18px;
+    padding: 8px;
+    text-align: center;
+    outline: none;
+    font-family: inherit;
+    color-scheme: dark;
+  }
+  .kintai-time:focus { border-color: var(--accent); }
+  .kintai-break {
+    flex: 1;
+    background: var(--display-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-size: 16px;
+    padding: 8px;
+    text-align: center;
+    outline: none;
+    font-family: inherit;
+  }
+  .kintai-break:focus { border-color: var(--accent); }
+  .kintai-result {
+    background: var(--history-bg);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+    margin-top: 4px;
+  }
+  .kintai-result .kintai-total {
+    font-size: 36px;
+    font-weight: 300;
+    color: var(--accent-green);
+  }
+  .kintai-result .kr-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .kintai-result .kintai-detail {
+    font-size: 12px;
+    color: var(--text-mid);
+    margin-top: 6px;
+    line-height: 1.6;
+  }
+  .kintai-note {
+    font-size: 10px;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 2px;
+  }
   .date-field { display: flex; align-items: center; gap: 6px; }
   .date-field label { font-size: 13px; color: var(--text-mid); min-width: 50px; }
   .date-input {
@@ -524,7 +586,7 @@
     ja: {
       subtitle: '日本オフィス版',
       hint: 'ドラッグで結果移動 · Alt+1-4 切替 · キーボード対応',
-      calc: '電卓', unit: '単位', warikan: '割勘', date: '日数',
+      calc: '電卓', unit: '単位', warikan: '割勘', date: '日数', kintai: '勤怠',
       clearHist: '履歴消去',
       // Calc buttons
       taxIn10: '税込10%', taxIn8: '税込8%', taxEx10: '税抜10%', taxEx8: '税抜8%',
@@ -566,7 +628,7 @@
         '4つの独立した電卓を同時に使えます',
         'デスクトップ: 2×2グリッド表示',
         'モバイル: 下のタブで電卓切替',
-        '各電卓で「電卓・単位・割勘・日数」の4モードを選べます',
+        '各電卓で「電卓・単位・割勘・日数・勤怠」の5モードを選べます',
       ],
       helpKeyboard: 'キーボード操作',
       helpKeyItems: [
@@ -612,13 +674,31 @@
         '開始日と終了日を選択',
         '日数・営業日（土日除外）・週数・月数を自動計算',
       ],
+      // Kintai
+      kintaiStart: '出勤時間',
+      kintaiEnd: '退勤時間',
+      kintaiBreak: '休憩時間',
+      kintaiBreakUnit: '分',
+      kintaiTotal: '実働時間',
+      kintaiGross: '総拘束時間',
+      kintaiBreakLabel: '休憩',
+      kintaiNet: '実働',
+      kintaiNote: '休憩なしの場合は空欄でOK',
+      kintaiHours: '時間',
+      kintaiMinutes: '分',
+      helpKintai: '勤怠計算',
+      helpKintaiItems: [
+        '出勤・退勤時間を入力して実働時間を自動計算',
+        '休憩時間（分）を入力可能（任意）',
+        '総拘束時間・休憩時間・実働時間を表示',
+      ],
       // Mobile nav
       navCalc: ['1', '2', '3', '4'],
     },
     en: {
       subtitle: 'Japan Office Edition',
       hint: 'Drag results between panes · Alt+1-4 switch · Keyboard ready',
-      calc: 'Calc', unit: 'Units', warikan: 'Split', date: 'Days',
+      calc: 'Calc', unit: 'Units', warikan: 'Split', date: 'Days', kintai: 'Hours',
       clearHist: 'Clear',
       taxIn10: '+Tax10%', taxIn8: '+Tax8%', taxEx10: '-Tax10%', taxEx8: '-Tax8%',
       man: '万(10K)', discount: 'Disc%', margin: 'Margin%',
@@ -653,7 +733,7 @@
         '4 independent calculators you can use simultaneously',
         'Desktop: 2x2 grid layout',
         'Mobile: tap bottom tabs to switch calculator',
-        'Each pane has 4 modes: Calc, Units, Split Bill, Day Counter',
+        'Each pane has 5 modes: Calc, Units, Split Bill, Day Counter, Work Hours',
       ],
       helpKeyboard: 'Keyboard Shortcuts',
       helpKeyItems: [
@@ -699,6 +779,23 @@
         'Pick start and end dates',
         'Shows total days, business days (excl. weekends), weeks & months',
       ],
+      kintaiStart: 'Clock In',
+      kintaiEnd: 'Clock Out',
+      kintaiBreak: 'Break',
+      kintaiBreakUnit: 'min',
+      kintaiTotal: 'Work Hours',
+      kintaiGross: 'Total span',
+      kintaiBreakLabel: 'Break',
+      kintaiNet: 'Net work',
+      kintaiNote: 'Leave break empty if none',
+      kintaiHours: 'hrs',
+      kintaiMinutes: 'min',
+      helpKintai: 'Work Hours (Kintai)',
+      helpKintaiItems: [
+        'Enter clock-in and clock-out times to calculate work hours',
+        'Optionally enter break time in minutes',
+        'Shows total span, break time, and net working hours',
+      ],
       navCalc: ['1', '2', '3', '4'],
     },
   };
@@ -707,7 +804,7 @@
 
   // ==================== STATE ====================
   const NUM_PANES = 4;
-  const MODES = ['calc', 'unit', 'warikan', 'date'];
+  const MODES = ['calc', 'unit', 'warikan', 'date', 'kintai'];
   const panes = [];
   let activePane = 0;
   let mobileVisible = 0;
@@ -836,7 +933,7 @@
     MODES.forEach(mode => {
       const tab = document.createElement('div');
       tab.className = 'pane-tab' + (mode === state.mode ? ' active' : '');
-      tab.textContent = t(mode === 'warikan' ? 'warikan' : mode === 'date' ? 'date' : mode);
+      tab.textContent = t(mode);
       tab.dataset.mode = mode;
       tab.addEventListener('click', e => {
         e.stopPropagation();
@@ -982,6 +1079,77 @@
     dateTo.addEventListener('input', updateDate);
     pane.appendChild(datePanel);
 
+    // Kintai (attendance)
+    const kintaiPanel = document.createElement('div');
+    kintaiPanel.className = 'kintai-panel';
+
+    const kfStart = document.createElement('div'); kfStart.className = 'kintai-field';
+    const klStart = document.createElement('label'); klStart.textContent = t('kintaiStart');
+    const kiStart = document.createElement('input'); kiStart.className = 'kintai-time'; kiStart.type = 'time'; kiStart.value = '09:00';
+    kfStart.append(klStart, kiStart);
+    kintaiPanel.appendChild(kfStart);
+
+    const kfEnd = document.createElement('div'); kfEnd.className = 'kintai-field';
+    const klEnd = document.createElement('label'); klEnd.textContent = t('kintaiEnd');
+    const kiEnd = document.createElement('input'); kiEnd.className = 'kintai-time'; kiEnd.type = 'time'; kiEnd.value = '18:00';
+    kfEnd.append(klEnd, kiEnd);
+    kintaiPanel.appendChild(kfEnd);
+
+    const kfBreak = document.createElement('div'); kfBreak.className = 'kintai-field';
+    const klBreak = document.createElement('label'); klBreak.textContent = t('kintaiBreak');
+    const kiBreak = document.createElement('input'); kiBreak.className = 'kintai-break'; kiBreak.type = 'number'; kiBreak.inputMode = 'numeric'; kiBreak.placeholder = '0'; kiBreak.min = '0';
+    const klUnit = document.createElement('span'); klUnit.style.cssText = 'color:var(--text-dim);font-size:13px;'; klUnit.textContent = t('kintaiBreakUnit');
+    kfBreak.append(klBreak, kiBreak, klUnit);
+    kintaiPanel.appendChild(kfBreak);
+
+    const kNote = document.createElement('div'); kNote.className = 'kintai-note'; kNote.textContent = t('kintaiNote');
+    kintaiPanel.appendChild(kNote);
+
+    const kResult = document.createElement('div');
+    kResult.className = 'kintai-result';
+    kResult.innerHTML = `<div class="kintai-total">8:00</div><div class="kr-label">${esc(t('kintaiTotal'))}</div><div class="kintai-detail"></div>`;
+    kintaiPanel.appendChild(kResult);
+
+    function updateKintai() {
+      const startParts = kiStart.value.split(':');
+      const endParts = kiEnd.value.split(':');
+      if (startParts.length < 2 || endParts.length < 2) return;
+      const startMin = parseInt(startParts[0]) * 60 + parseInt(startParts[1]);
+      let endMin = parseInt(endParts[0]) * 60 + parseInt(endParts[1]);
+      // Handle overnight (e.g. 22:00 to 06:00)
+      if (endMin <= startMin) endMin += 24 * 60;
+      const grossMin = endMin - startMin;
+      const breakMin = parseInt(kiBreak.value) || 0;
+      const netMin = Math.max(0, grossMin - breakMin);
+
+      const grossH = Math.floor(grossMin / 60);
+      const grossM = grossMin % 60;
+      const netH = Math.floor(netMin / 60);
+      const netM = netMin % 60;
+      const breakH = Math.floor(breakMin / 60);
+      const breakM = breakMin % 60;
+
+      kResult.querySelector('.kintai-total').textContent = `${netH}:${String(netM).padStart(2,'0')}`;
+      kResult.querySelector('.kr-label').textContent = t('kintaiTotal');
+
+      let detail = `${t('kintaiGross')}: ${grossH}${t('kintaiHours')} ${grossM}${t('kintaiMinutes')}`;
+      if (breakMin > 0) {
+        detail += `\n${t('kintaiBreakLabel')}: ${breakH > 0 ? breakH + t('kintaiHours') + ' ' : ''}${breakM}${t('kintaiMinutes')}`;
+      }
+      detail += `\n${t('kintaiNet')}: ${netH}${t('kintaiHours')} ${netM}${t('kintaiMinutes')}`;
+      // Decimal hours (common for timesheets)
+      const decimalHrs = (netMin / 60).toFixed(2);
+      detail += ` (${decimalHrs}h)`;
+
+      kResult.querySelector('.kintai-detail').textContent = detail;
+      kResult.querySelector('.kintai-detail').style.whiteSpace = 'pre-line';
+    }
+    kiStart.addEventListener('input', updateKintai);
+    kiEnd.addEventListener('input', updateKintai);
+    kiBreak.addEventListener('input', updateKintai);
+    updateKintai();
+    pane.appendChild(kintaiPanel);
+
     // Events
     pane.addEventListener('mousedown', () => setActive(i));
     display.addEventListener('dragstart', e => {
@@ -1001,7 +1169,7 @@
     });
 
     grid.appendChild(pane);
-    panes.push({ state, el: pane, display, expr, subDisplay, histArea, btnGrid, convPanel, wariPanel, datePanel, tabs, clearBtn });
+    panes.push({ state, el: pane, display, expr, subDisplay, histArea, btnGrid, convPanel, wariPanel, datePanel, kintaiPanel, tabs, clearBtn });
   }
 
   // ==================== MOBILE NAV ====================
@@ -1036,6 +1204,7 @@
       ['helpUnit', 'helpUnitItems'],
       ['helpWarikan', 'helpWarikanItems'],
       ['helpDate', 'helpDateItems'],
+      ['helpKintai', 'helpKintaiItems'],
     ];
     let html = `<button class="help-close" id="helpClose">${esc(t('helpClose'))}</button>`;
     html += `<h2>${esc(t('helpTitle'))}</h2>`;
@@ -1092,6 +1261,7 @@
     p.convPanel.classList.toggle('visible', mode==='unit');
     p.wariPanel.classList.toggle('visible', mode==='warikan');
     p.datePanel.classList.toggle('visible', mode==='date');
+    p.kintaiPanel.classList.toggle('visible', mode==='kintai');
     p.el.querySelector('.display-area').style.display = mode==='calc' ? '' : 'none';
     p.histArea.style.display = mode==='calc' ? '' : 'none';
     p.clearBtn.style.display = mode==='calc' ? '' : 'none';
