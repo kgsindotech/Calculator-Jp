@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>QuadCalc</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -409,14 +409,15 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 48px;
+    height: calc(52px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     background: var(--pane-bg);
     border-top: 1px solid var(--border);
     z-index: 50;
   }
   .mobile-nav-inner {
     display: flex;
-    height: 100%;
+    height: 52px;
   }
   .mobile-nav-btn {
     flex: 1;
@@ -427,9 +428,10 @@
     background: none;
     border: none;
     color: var(--text-dim);
-    font-size: 9px;
+    font-size: 10px;
+    font-weight: 600;
     cursor: pointer;
-    gap: 2px;
+    gap: 3px;
     border-top: 2px solid transparent;
     transition: all 0.15s;
   }
@@ -438,24 +440,44 @@
     border-top-color: var(--accent);
     background: rgba(13,110,253,0.08);
   }
-  .mobile-nav-btn .nav-icon { font-size: 18px; }
+  .mobile-nav-btn .nav-icon {
+    font-size: 20px;
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    text-align: center;
+    border-radius: 8px;
+    background: var(--btn);
+    font-weight: 700;
+    font-style: normal;
+  }
+  .mobile-nav-btn.active .nav-icon {
+    background: var(--accent);
+    color: #fff;
+  }
 
   @media (max-width: 768px) {
     .grid {
       grid-template-columns: 1fr;
       grid-template-rows: 1fr;
-      height: calc(100vh - 36px - 48px);
+      height: calc(100vh - 36px - 52px - env(safe-area-inset-bottom, 0px));
+      padding: 0;
     }
-    .calc-pane { display: none; border-radius: 0; }
+    .calc-pane { display: none; border-radius: 0; border: none; }
     .calc-pane.mobile-visible { display: flex; }
+    .calc-pane.active { border: none; }
     .mobile-nav { display: block; }
     .header .hint { display: none; }
-    .display { font-size: 36px; min-height: 44px; line-height: 44px; }
-    .sub-display { font-size: 13px; }
-    .btn { font-size: 18px; border-radius: 8px; min-height: 44px; }
+    .display { font-size: 32px; min-height: 40px; line-height: 40px; }
+    .sub-display { font-size: 12px; min-height: 14px; }
+    .expression { font-size: 11px; min-height: 14px; }
+    .display-area { padding: 1px 10px; }
+    .buttons { gap: 3px; padding: 3px 4px; }
+    .btn { font-size: 18px; border-radius: 8px; }
     .btn.tax, .btn.biz { font-size: 12px; }
+    .pane-header { padding: 2px 8px; min-height: 28px; }
     .pane-tab { font-size: 10px; padding: 4px 8px; }
-    .history-area { max-height: 52px; }
+    .history-area { max-height: 40px; padding: 1px 10px; }
     .conv-input { font-size: 16px; padding: 10px 8px; }
     .wari-input { font-size: 22px; padding: 10px; }
     .wari-result .amount { font-size: 38px; }
@@ -988,7 +1010,7 @@
     for (let i = 0; i < NUM_PANES; i++) {
       const btn = document.createElement('button');
       btn.className = 'mobile-nav-btn' + (i === mobileVisible ? ' active' : '');
-      btn.innerHTML = `<span class="nav-icon">${['⬜','⬜','⬜','⬜'][i]}</span>CALC ${i+1}`;
+      btn.innerHTML = `<span class="nav-icon">${i+1}</span>CALC ${i+1}`;
       btn.addEventListener('click', () => setMobileVisible(i));
       nav.appendChild(btn);
     }
